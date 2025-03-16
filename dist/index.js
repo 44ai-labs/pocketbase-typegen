@@ -253,11 +253,12 @@ function generatePydantic(schema) {
 from typing import Optional, List, Dict, Any, Literal, TypeVar, Generic
 from datetime import datetime
 from enum import Enum, auto`;
+  const ignoredFields = ["id", "created", "updated"];
   const models = schema.map((collection) => {
     const enums = collection.fields.filter(
       (field) => field.type === "select" && field.values && field.values.length > 0
     ).map((field) => generateEnum(collection.name, field)).join("\n\n");
-    const fields = collection.fields.map((field) => generatePydanticField(collection.name, field)).join("\n    ");
+    const fields = collection.fields.filter((field) => !ignoredFields.includes(field.name)).map((field) => generatePydanticField(collection.name, field)).join("\n    ");
     const baseClass = collection.type === "auth" ? "AuthSystemFields" : "BaseSystemFields";
     return `
 ${enums}
@@ -283,6 +284,16 @@ class ${toPascalCase(collection.name)}(${toPascalCase(collection.name)}Base):
   const systemFields = `
 # needs to map to the protocol here:
 # https://github.com/vaphes/pocketbase/blob/87f40bf5ee4e0a7ba05f2b8ea1725cdb48162370/pocketbase/models/utils/base_model.py#L10
+
+def to_datetime(
+    str_datetime: str, format: str = "%Y-%m-%d %H:%M:%S"
+) -> datetime | str:
+    str_datetime = str_datetime.split(".")[0]
+    try:
+        return datetime.strptime(str_datetime, format)
+    except Exception:
+        return str_datetime
+
 class BaseSystemFields(BaseModel):
     """Base system fields included in all collections"""
     id: str

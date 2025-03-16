@@ -7,6 +7,7 @@ from typing import Optional, List, Dict, Any, Literal, TypeVar, Generic
 from datetime import datetime
 from enum import Enum, auto`
 
+  const ignoredFields = ["id", "created", "updated"]
   const models = schema
     .map((collection) => {
       // Generate enums for select fields first
@@ -20,6 +21,7 @@ from enum import Enum, auto`
 
       // Generate the actual model
       const fields = collection.fields
+        .filter((field) => !ignoredFields.includes(field.name))
         .map((field) => generatePydanticField(collection.name, field))
         .join("\n    ")
 
@@ -36,9 +38,8 @@ class ${toPascalCase(collection.name)}Base(${baseClass}):
 class ${toPascalCase(collection.name)}Create(${toPascalCase(
         collection.name
       )}Base):
-    """Create model for ${
-      collection.name
-    } collection (used for creation/updates)"""
+    """Create model for ${collection.name
+        } collection (used for creation/updates)"""
     pass
 
 class ${toPascalCase(collection.name)}(${toPascalCase(collection.name)}Base):
@@ -55,6 +56,16 @@ class ${toPascalCase(collection.name)}(${toPascalCase(collection.name)}Base):
   const systemFields = `
 # needs to map to the protocol here:
 # https://github.com/vaphes/pocketbase/blob/87f40bf5ee4e0a7ba05f2b8ea1725cdb48162370/pocketbase/models/utils/base_model.py#L10
+
+def to_datetime(
+    str_datetime: str, format: str = "%Y-%m-%d %H:%M:%S"
+) -> datetime | str:
+    str_datetime = str_datetime.split(".")[0]
+    try:
+        return datetime.strptime(str_datetime, format)
+    except Exception:
+        return str_datetime
+
 class BaseSystemFields(BaseModel):
     """Base system fields included in all collections"""
     id: str
@@ -92,8 +103,8 @@ Collections = {
 
 # Type alias for any collection model
 AnyCollection = ${schema
-    .map((collection) => toPascalCase(collection.name))
-    .join(" | ")}
+      .map((collection) => toPascalCase(collection.name))
+      .join(" | ")}
 `
 
   return `${imports}\n\n${systemFields}\n\n${models}\n\n${collectionMapping}\n`
