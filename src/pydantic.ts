@@ -53,9 +53,24 @@ class ${toPascalCase(collection.name)}(${toPascalCase(collection.name)}Base):
 
   // Add base system field classes
   const systemFields = `
+# needs to map to the protocol here:
+# https://github.com/vaphes/pocketbase/blob/87f40bf5ee4e0a7ba05f2b8ea1725cdb48162370/pocketbase/models/utils/base_model.py#L10
 class BaseSystemFields(BaseModel):
     """Base system fields included in all collections"""
     id: str
+    created: str | datetime.datetime
+    updated: str | datetime.datetime
+
+    def load(self, data: dict[str, Any]) -> None:
+        """Loads data into the current model."""
+        self.id = data.pop("id", "")
+        self.created = to_datetime(data.pop("created", ""))
+        self.updated = to_datetime(data.pop("updated", ""))
+
+    @property
+    def is_new(self) -> bool:
+        """Returns whether the current loaded data represent a stored db record."""
+        return not self.id
     
 class AuthSystemFields(BaseSystemFields):
     """Additional system fields for auth collections"""
