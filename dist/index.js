@@ -297,8 +297,8 @@ def to_datetime(
 class BaseSystemFields(BaseModel):
     """Base system fields included in all collections"""
     id: str
-    created: str | datetime.datetime
-    updated: str | datetime.datetime
+    created: str | datetime
+    updated: str | datetime
 
     def load(self, data: dict[str, Any]) -> None:
         """Loads data into the current model."""
