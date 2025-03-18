@@ -369,7 +369,7 @@ function getPydanticType(collectionName, field) {
   }
   const baseType = pydanticTypeMap[field.type] || "Any";
   if (field.type === "json") {
-    return "Dict[str, Any]";
+    return "Any";
   }
   if (field.maxSelect && field.maxSelect > 1) {
     return `List[${baseType}]`;

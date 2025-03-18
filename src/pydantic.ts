@@ -153,7 +153,7 @@ function getPydanticType(collectionName: string, field: FieldSchema): string {
     pydanticTypeMap[field.type as keyof typeof pydanticTypeMap] || "Any"
 
   if (field.type === "json") {
-    return "Dict[str, Any]"
+    return "Any"
   }
 
   if (field.maxSelect && field.maxSelect > 1) {
